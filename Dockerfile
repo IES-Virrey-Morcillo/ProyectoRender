@@ -1,18 +1,16 @@
-# Usa una imagen ligera de Java 17
-FROM eclipse-temurin:17-jdk-alpine
-
-# Carpeta donde se ejecutará tu app
+# Etapa 1: Construcción
+FROM maven:3.9.4-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copia el jar generado por Maven
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
+# Etapa 2: Ejecución
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 
-# Render usa esta variable de entorno para el puerto
+# Render pasará la variable PORT, Spring debe leerla
 ENV PORT=8080
-
-# Expone el puerto
 EXPOSE 8080
 
-# Comando para arrancar tu app
 ENTRYPOINT ["java", "-jar", "app.jar"]
